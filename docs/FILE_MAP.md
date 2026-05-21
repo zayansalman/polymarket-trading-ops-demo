@@ -21,6 +21,5 @@
 - `PRD.md` - product scope and success criteria.
 - `AGENTS.md` - repo-specific Codex operating rules.
 - `docs/ARCHITECTURE.md` - module and data-flow overview.
-- `docs/INTERVIEW_DEMO.md` - interview walkthrough.
 - `docs/OPERATIONS_RUNBOOK.md` - local runbook.
 - `tools/demo_snapshot.py` - terminal summary of the current paper ledger.

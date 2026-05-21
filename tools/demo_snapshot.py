@@ -1,4 +1,4 @@
-"""Print an interview-friendly BTC paper trading snapshot."""
+"""Print a BTC paper trading snapshot."""
 from __future__ import annotations
 
 import asyncio

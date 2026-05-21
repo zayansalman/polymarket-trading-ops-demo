@@ -15,6 +15,7 @@ data/
 *.db-shm
 .DS_Store
 .claude/
+local_private/
 archive/
 .idea/
 .vscode/

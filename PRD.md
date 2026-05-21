@@ -6,8 +6,8 @@ Build a focused local dashboard that demonstrates BTC 5-minute Polymarket
 trading operations without live execution risk.
 
 The user should be able to press **Start** to run a paper BTC bot and press
-**Stop** to halt it. The app should expose enough state to discuss strategy,
-risk controls, operations, and future live-execution work in interviews.
+**Stop** to halt it. The app should expose enough state to review strategy,
+risk controls, operations, and future live-execution work.
 
 ## Scope
 
@@ -57,4 +57,4 @@ Out of scope:
 - Stop halts new entries immediately.
 - SQLite records ticks, positions, and activity.
 - CLI snapshot prints current risk, PnL, and history baseline.
-- Repo can be shown as a clean, job-relevant trading-ops demo.
+- Repo can be shared as a clean BTC trading-ops demo.

@@ -17,10 +17,10 @@ No live orders are placed by this build. No private key is required.
 
 ## Why This Exists
 
-The project is built as a trading-ops interview demo: small, observable, and
-easy to explain. It highlights market discovery, signal logging,
-confidence-based sizing, risk controls, persistence, and a dashboard kill
-switch without pretending to be a production execution stack.
+The project is built as a small, observable trading-ops demo. It highlights
+market discovery, signal logging, confidence-based sizing, risk controls,
+persistence, and a dashboard kill switch without pretending to be a production
+execution stack.
 
 ## Local Setup
 
@@ -54,7 +54,7 @@ BTC_PAPER_MIN_CONFIDENCE=0.62
 BTC_PAPER_TARGET_RETURN=0.10
 BTC_PAPER_STOP_RETURN=-0.08
 BTC_PAPER_TIME_EXIT_SECONDS=45
-BTC_HISTORY_CSV_PATH=~/Downloads/Polymarket-History-2026-04-30.csv
+BTC_HISTORY_CSV_PATH=./data/polymarket_history.csv
 ```
 
 ## Active Files
@@ -66,7 +66,7 @@ BTC_HISTORY_CSV_PATH=~/Downloads/Polymarket-History-2026-04-30.csv
 - `btc_bot/controller.py` - Start/Stop control and kill-switch behavior.
 - `btc_bot/history.py` - optional BTC history CSV summary for sizing context.
 - `db.py` - SQLite schema for config, activity feed, ticks, and positions.
-- `tools/demo_snapshot.py` - CLI snapshot for interview prep.
+- `tools/demo_snapshot.py` - CLI snapshot for local operator review.
 
 ## Safety Boundaries
 

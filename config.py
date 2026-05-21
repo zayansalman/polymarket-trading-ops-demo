@@ -56,6 +56,6 @@ BTC_PAPER_TIME_EXIT_SECONDS = int(os.getenv("BTC_PAPER_TIME_EXIT_SECONDS", "45")
 BTC_HISTORY_CSV_PATH = Path(
     os.getenv(
         "BTC_HISTORY_CSV_PATH",
-        "~/Downloads/Polymarket-History-2026-04-30.csv",
+        str(DATA_DIR / "polymarket_history.csv"),
     )
 ).expanduser()

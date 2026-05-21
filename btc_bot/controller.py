@@ -51,7 +51,7 @@ async def get_status() -> BtcBotStatus:
 
     if state == "running" and not _is_runner_alive():
         state = "stopped"
-        detail = "BTC paper loop is not running in this process. Press Start to resume."
+        detail = "BTC paper loop is not running in this process. Press Start to restart."
         await set_config("btc_bot.state", state)
         await set_config("btc_bot.detail", detail)
 

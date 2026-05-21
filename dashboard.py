@@ -335,7 +335,7 @@ def _history_markdown() -> str:
 
 def _brief_markdown() -> str:
     return (
-        "### Interview Demo Brief\n"
+        "### System Brief\n"
         "This is a local BTC 5-minute Polymarket paper-trading ops demo. It shows "
         "a narrow production mindset: market discovery, public price feed checks, "
         "confidence-based sizing, one-position risk control, structured event logs, "
