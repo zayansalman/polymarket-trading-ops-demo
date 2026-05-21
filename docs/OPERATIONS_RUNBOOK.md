@@ -1,5 +1,8 @@
 # Operations Runbook
 
+This runbook is for the local BTC 5-minute trading systems lab. The goal is to
+make operation boring: visible state, bounded paper risk, and fast Stop behavior.
+
 ## Start Locally
 
 ```bash
@@ -30,6 +33,7 @@ Expected:
 - Risk state is `OK`, `IDLE`, or an explicit stale/feed state.
 - Open positions are `0` or `1`.
 - Activity feed contains BTC bot events.
+- Start/Stop events are visible in structured logs and SQLite notifications.
 
 ## Common Issues
 
@@ -42,6 +46,6 @@ Expected:
 
 ## Data
 
-SQLite lives at `DB_PATH`, defaulting to `./data/btc_5m_demo.db`.
+SQLite lives at `DB_PATH`, defaulting to `./data/btc_5m_lab.db`.
 
 The `data/` directory is local and gitignored.

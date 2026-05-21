@@ -17,7 +17,7 @@
 
 ## Docs And Tools
 
-- `README.md` - setup and demo overview.
+- `README.md` - setup and lab overview.
 - `PRD.md` - product scope and success criteria.
 - `AGENTS.md` - repo-specific Codex operating rules.
 - `docs/ARCHITECTURE.md` - module and data-flow overview.

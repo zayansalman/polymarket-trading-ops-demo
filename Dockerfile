@@ -4,7 +4,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     DATA_DIR=/data \
-    DB_PATH=/data/btc_5m_demo.db
+    DB_PATH=/data/btc_5m_lab.db
 
 WORKDIR /app
 

@@ -320,7 +320,7 @@ def _history_markdown() -> str:
         return (
             "### Historical Trade Baseline\n"
             f"Optional CSV not found at `{BTC_HISTORY_CSV_PATH}`. The bot still runs; "
-            "the CSV only helps explain why the demo sizes paper trades at $1-$5."
+            "the CSV only helps explain why the lab sizes paper trades at $1-$5."
         )
     return (
         "### Historical Trade Baseline\n"
@@ -336,13 +336,26 @@ def _history_markdown() -> str:
 def _brief_markdown() -> str:
     return (
         "### System Brief\n"
-        "This is a local BTC 5-minute Polymarket paper-trading ops demo. It shows "
-        "a narrow production mindset: market discovery, public price feed checks, "
-        "confidence-based sizing, one-position risk control, structured event logs, "
-        "and a dashboard kill switch.\n\n"
-        "The demo does not sign or submit live orders. The active workflow is simple: "
+        "This is a local BTC 5-minute Polymarket trading systems lab. It is useful "
+        "as a personal paper bot and as a compact example of trading-system "
+        "discipline: market discovery, feed labeling, confidence-based sizing, "
+        "one-position risk control, structured event logs, and a dashboard kill "
+        "switch.\n\n"
+        "This build does not sign or submit live orders. The active workflow is simple: "
         "**Start** begins simulated BTC 5m trading, and **Stop** halts new entries "
         "and closes any open simulated position."
+    )
+
+
+def _scorecard_markdown() -> str:
+    return (
+        "### Trading Systems Scorecard\n"
+        "- Scope: BTC 5-minute Up/Down markets only.\n"
+        "- Operator control: Start, Stop, Refresh, and activity feed.\n"
+        "- Risk: one open paper position, bounded $1-$5 sizing, target/stop/time exits.\n"
+        "- Feed discipline: public BTC fallback is labeled; Chainlink Streams is the intended reference.\n"
+        "- Auditability: ticks, simulated positions, exits, config state, and notifications persist to SQLite.\n"
+        "- Failure visibility: market/feed/loop errors surface in logs and dashboard state."
     )
 
 
@@ -390,19 +403,20 @@ def _btc_stop_views() -> tuple[str, str, str, str, str]:
 
 def build_ui() -> gr.Blocks:
     initial = _btc_views()
-    with gr.Blocks(title="BTC 5m Trading Demo", css=CSS) as app:
+    with gr.Blocks(title="BTC 5m Trading Systems Lab", css=CSS) as app:
         gr.HTML(
             """
             <div class='hero'>
-              <h1>BTC 5-Minute Trading Ops</h1>
+              <h1>BTC 5-Minute Trading Systems Lab</h1>
               <p>Local paper-trading dashboard for Polymarket BTC Up/Down 5-minute markets.
-              One focused demo: press Start to simulate, press Stop to halt.</p>
+              One focused market loop: press Start to simulate, press Stop to halt.</p>
             </div>
             """
         )
         with gr.Tab("Overview"):
             overview = gr.HTML(value=initial[0])
             gr.Markdown(value=_brief_markdown())
+            gr.Markdown(value=_scorecard_markdown())
             history = gr.Markdown(value=initial[3])
         with gr.Tab("BTC 5m"):
             with gr.Row():

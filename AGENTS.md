@@ -2,7 +2,7 @@
 
 ## Active Scope
 
-This repository is a local-only BTC 5-minute Polymarket paper-trading demo.
+This repository is a local-only BTC 5-minute Polymarket trading systems lab.
 
 The only active product behavior is:
 
@@ -24,6 +24,9 @@ The only active product behavior is:
 - No silent failures. Feed, market, state, or execution-loop errors must appear
   in structured logs or dashboard state.
 - Keep modules small and boundaries clear.
+- Keep public docs vendor-neutral and focused on trading-system quality:
+  observability, risk control, feed discipline, persistence, and operator
+  control.
 
 ## Code Conventions
 

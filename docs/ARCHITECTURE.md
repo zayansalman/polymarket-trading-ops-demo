@@ -1,6 +1,6 @@
 # Architecture
 
-The app is deliberately small:
+The app is deliberately small and operator-oriented:
 
 ```mermaid
 flowchart LR
@@ -21,6 +21,19 @@ flowchart LR
   entries, exits, and paper ledger writes.
 - `db.py` owns SQLite schema, config state, and activity notifications.
 - `btc_bot/history.py` reads the optional exported BTC history CSV.
+
+## Trading-System Qualities
+
+- Narrow product scope: BTC 5-minute Up/Down only.
+- Explicit operator control: Start, Stop, Refresh, and activity feed.
+- Local persistence: ticks, entries, exits, config state, and notifications are
+  written to SQLite.
+- Feed labeling: public BTC spot fallback is clear, with Chainlink Data Streams
+  reserved as the intended settlement-aware reference.
+- Failure visibility: exceptions are logged and surfaced instead of silently
+  disappearing.
+- Risk containment: paper mode only, bounded sizing, one open position, and
+  force-close behavior on Stop.
 
 ## Data Flow
 

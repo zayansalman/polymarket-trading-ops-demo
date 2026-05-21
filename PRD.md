@@ -1,13 +1,14 @@
-# PRD: BTC 5-Minute Paper Trading Demo
+# PRD: BTC 5-Minute Trading Systems Lab
 
 ## Product Goal
 
-Build a focused local dashboard that demonstrates BTC 5-minute Polymarket
-trading operations without live execution risk.
+Build a focused local dashboard for BTC 5-minute Polymarket paper trading that
+is useful to operate personally and clear enough to evaluate as a trading
+systems project.
 
 The user should be able to press **Start** to run a paper BTC bot and press
 **Stop** to halt it. The app should expose enough state to review strategy,
-risk controls, operations, and future live-execution work.
+risk controls, feed quality, operations, and future live-execution work.
 
 ## Scope
 
@@ -21,6 +22,8 @@ In scope:
 - Persist every tick, simulated position, exit, and dashboard event in SQLite.
 - Provide dashboard Start, Stop, Refresh, activity feed, and summary metrics.
 - Summarize the optional exported BTC Polymarket history CSV.
+- Present a concise systems scorecard covering scope, risk, feed discipline,
+  auditability, and failure visibility.
 
 Out of scope:
 
@@ -57,4 +60,4 @@ Out of scope:
 - Stop halts new entries immediately.
 - SQLite records ticks, positions, and activity.
 - CLI snapshot prints current risk, PnL, and history baseline.
-- Repo can be shared as a clean BTC trading-ops demo.
+- Repo can be shared as a clean BTC trading systems lab.

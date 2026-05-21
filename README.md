@@ -1,7 +1,7 @@
-# BTC 5-Minute Polymarket Paper Trading Demo
+# BTC 5-Minute Trading Systems Lab
 
-This repository is now a single-purpose, local-only demo for BTC 5-minute
-Polymarket Up/Down paper trading.
+This repository is a single-purpose, local-only trading systems lab for BTC
+5-minute Polymarket Up/Down paper trading.
 
 The workflow is intentionally narrow:
 
@@ -17,10 +17,27 @@ No live orders are placed by this build. No private key is required.
 
 ## Why This Exists
 
-The project is built as a small, observable trading-ops demo. It highlights
-market discovery, signal logging, confidence-based sizing, risk controls,
-persistence, and a dashboard kill switch without pretending to be a production
-execution stack.
+The project is built to be useful day-to-day while also showing trading-system
+thinking: market discovery, signal logging, confidence-based sizing, risk
+controls, persistence, and an operator kill switch.
+
+It is intentionally not marketed as a production HFT engine. The value is in
+the engineering discipline that HFT and market-making teams also care about:
+explicit state, observable failures, small risk surface, and a clean path from
+paper trading to future execution/reconciliation work.
+
+## Systems Scorecard
+
+- **Scope control:** BTC 5-minute Up/Down markets only.
+- **Operator control:** Start, Stop, Refresh, and a visible activity feed.
+- **Risk control:** one open paper position, bounded $1-$5 sizing, late-window
+  entry skips, target/stop/time exits.
+- **Feed discipline:** public BTC spot fallback is labeled; Chainlink Data
+  Streams is the intended settlement-aware reference.
+- **Auditability:** every tick, simulated entry, exit, and dashboard event is
+  persisted to SQLite.
+- **Failure visibility:** feed, market, and loop errors surface in dashboard
+  state and structured logs.
 
 ## Local Setup
 
@@ -41,7 +58,7 @@ http://127.0.0.1:7860
 
 ```bash
 DATA_DIR=./data
-DB_PATH=./data/btc_5m_demo.db
+DB_PATH=./data/btc_5m_lab.db
 DASHBOARD_SERVER_NAME=127.0.0.1
 DASHBOARD_SERVER_PORT=7860
 
@@ -60,7 +77,7 @@ BTC_HISTORY_CSV_PATH=./data/polymarket_history.csv
 ## Active Files
 
 - `main.py` - initializes SQLite and launches the dashboard.
-- `dashboard.py` - BTC-only Gradio control surface.
+- `dashboard.py` - BTC-only Gradio operator surface.
 - `btc_bot/paper.py` - paper market discovery, signal, simulated entry/exit,
   and ledger logic.
 - `btc_bot/controller.py` - Start/Stop control and kill-switch behavior.
