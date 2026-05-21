@@ -1,29 +1,26 @@
 # File Map
 
-## Active Root
+## Runtime
 
-- `main.py` - local app entrypoint.
-- `dashboard.py` - focused Gradio dashboard.
-- `config.py` - env vars and constants.
-- `db.py` - SQLite helpers and recommendation schema.
-- `polymarket_client.py` - public Polymarket API wrapper.
-- `weather_scanner.py` - multi-market weather scanner.
-- `analyzer_weather.py` - single-market weather analyzer.
-- `recommendations.py` - recommendation logging/querying.
-- `model_eval.py` - recommendation settlement and scoring.
-- `calibrator.py` - weather probability calibrator.
-- `my_portfolio.py` - read-only Polymarket portfolio view.
-- `llm.py` and `llm_sanity_check.py` - HF-only LLM helpers.
-- `btc_bot/` - BTC 5m package; paper loop, history stats, Start/Stop state.
-- `tools/analyze_my_trades.py` - one-off wallet/weather history audit helper.
-- `tools/demo_snapshot.py` - interview-friendly CLI snapshot of BTC paper state.
-- `docs/INTERVIEW_DEMO.md` - demo narrative mapped to crypto trading roles.
-- `docs/OPERATIONS_RUNBOOK.md` - monitoring and shift handoff checklist.
-- `docs/ARCHITECTURE.md` - active BTC paper trading architecture.
+- `main.py` - app entrypoint.
+- `dashboard.py` - BTC-only Gradio dashboard.
+- `config.py` - local paths, dashboard bind, and BTC paper parameters.
+- `db.py` - SQLite schema and helper functions.
+- `logging_setup.py` - structured JSON logging.
 
-## Archive
+## BTC Bot
 
-- `archive/legacy_hold_to_resolution/` - old copy-trader/watchlist implementation and PRD.
-- `archive/polyvol_spec/` - older BTC/PolyVol specification bundle.
-- `archive/data_exports/` - old Polymarket CSV exports.
-- `archive/graphify_out_legacy/` - stale generated project graph from the old rule set.
+- `btc_bot/controller.py` - Start/Stop controller and kill switch.
+- `btc_bot/paper.py` - BTC 5-minute paper trading engine.
+- `btc_bot/history.py` - optional exported BTC trade-history summary.
+- `btc_bot/__init__.py` - package marker.
+
+## Docs And Tools
+
+- `README.md` - setup and demo overview.
+- `PRD.md` - product scope and success criteria.
+- `AGENTS.md` - repo-specific Codex operating rules.
+- `docs/ARCHITECTURE.md` - module and data-flow overview.
+- `docs/INTERVIEW_DEMO.md` - interview walkthrough.
+- `docs/OPERATIONS_RUNBOOK.md` - local runbook.
+- `tools/demo_snapshot.py` - terminal summary of the current paper ledger.

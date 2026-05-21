@@ -1,25 +1,20 @@
-"""Start/stop surface for the BTC 5-minute bot.
-
-BTC automation is allowed by the active repository rules, but the actual
-market feed, signal engine, order executor, and recovery ledger still need to
-be built. Until then, this controller records dashboard intent and reports
-that execution is not ready instead of pretending a bot is running.
-"""
+"""Start/stop controller for the BTC 5-minute paper trader."""
 from __future__ import annotations
 
 import asyncio
 import threading
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from config import BTC_BOT_MODE, BTC_PAPER_MAX_TRADE_USD, BTC_PAPER_MIN_TRADE_USD
 from btc_bot.paper import force_close_open_positions, run_paper_loop
+from config import BTC_BOT_MODE, BTC_PAPER_MAX_TRADE_USD, BTC_PAPER_MIN_TRADE_USD
 from db import get_config, set_config
+from logging_setup import get_logger
 
+log = get_logger("btc_controller")
 
-LIVE_NOT_READY_REASON = (
-    "Live BTC execution is not implemented here yet. Paper mode is available "
-    "and does not place real orders."
+PAPER_ONLY_DETAIL = (
+    "BTC 5-minute paper mode is ready. No live orders are placed by this build."
 )
 
 _runner_thread: threading.Thread | None = None
@@ -35,11 +30,11 @@ class BtcBotStatus:
     detail: str
 
 
-def _not_ready_detail() -> str:
+def _default_detail() -> str:
     return (
-        f"{LIVE_NOT_READY_REASON}\n\n"
-        f"Configured mode: {BTC_BOT_MODE}. Paper sizing range: "
-        f"${BTC_PAPER_MIN_TRADE_USD:.0f}-${BTC_PAPER_MAX_TRADE_USD:.0f} by confidence."
+        f"{PAPER_ONLY_DETAIL}\n\n"
+        f"Paper sizing range: ${BTC_PAPER_MIN_TRADE_USD:.0f}-"
+        f"${BTC_PAPER_MAX_TRADE_USD:.0f} by confidence."
     )
 
 
@@ -48,48 +43,29 @@ def _is_runner_alive() -> bool:
 
 
 async def get_status() -> BtcBotStatus:
-    """Return current BTC controller status, normalizing legacy DB state."""
-    state = await get_config("btc_bot.state", "not_ready")
+    """Return current BTC controller status."""
+    state = await get_config("btc_bot.state", "stopped")
     mode = await get_config("btc_bot.mode", BTC_BOT_MODE)
     updated_at = await get_config("btc_bot.updated_at")
-    detail = await get_config("btc_bot.detail", _not_ready_detail())
+    detail = await get_config("btc_bot.detail", _default_detail())
 
-    stale_policy_state = (
-        state == "blocked"
-        or mode == "policy_gated"
-        or (detail is not None and "AGENTS.md rules" in detail)
-    )
-    if stale_policy_state:
-        state = "not_ready"
-        mode = BTC_BOT_MODE
-        detail = _not_ready_detail()
-        await set_config("btc_bot.state", state)
-        await set_config("btc_bot.mode", mode)
-        await set_config("btc_bot.detail", detail)
     if state == "running" and not _is_runner_alive():
         state = "stopped"
-        detail = "BTC paper loop is not running in this process. Press Start to resume paper trading."
+        detail = "BTC paper loop is not running in this process. Press Start to resume."
         await set_config("btc_bot.state", state)
         await set_config("btc_bot.detail", detail)
 
     return BtcBotStatus(
-        state=state or "not_ready",
+        state=state or "stopped",
         mode=mode or BTC_BOT_MODE,
         updated_at=updated_at,
-        detail=detail or _not_ready_detail(),
+        detail=detail or _default_detail(),
     )
 
 
 async def request_start() -> BtcBotStatus:
-    """Start the paper runner. Never places live orders."""
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    if BTC_BOT_MODE != "paper":
-        await set_config("btc_bot.state", "not_ready")
-        await set_config("btc_bot.mode", BTC_BOT_MODE)
-        await set_config("btc_bot.updated_at", now)
-        await set_config("btc_bot.detail", _not_ready_detail())
-        return await get_status()
-
+    """Start the paper runner."""
+    now = datetime.now(UTC).isoformat(timespec="seconds")
     _ensure_runner_started()
     await set_config("btc_bot.state", "running")
     await set_config("btc_bot.mode", "paper")
@@ -103,18 +79,20 @@ async def request_start() -> BtcBotStatus:
 
 async def request_stop() -> BtcBotStatus:
     """Stop the paper runner and disable new simulated entries."""
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    now = datetime.now(UTC).isoformat(timespec="seconds")
     if _stop_event is not None:
         _stop_event.set()
-    closed_count = await _safe_force_close()
+    closed_count, close_error = await _safe_force_close()
+    detail = (
+        "BTC paper loop stop requested. New simulated entries are disabled. "
+        f"Force-closed {closed_count} open paper position(s)."
+    )
+    if close_error:
+        detail = f"{detail} Force-close check failed: {close_error}"
     await set_config("btc_bot.state", "stopped")
     await set_config("btc_bot.mode", "paper")
     await set_config("btc_bot.updated_at", now)
-    await set_config(
-        "btc_bot.detail",
-        f"BTC paper loop stop requested. New simulated entries are disabled. "
-        f"Force-closed {closed_count} open paper position(s).",
-    )
+    await set_config("btc_bot.detail", detail)
     return await get_status()
 
 
@@ -137,8 +115,10 @@ def _run_loop_in_thread(stop_event: threading.Event) -> None:
     asyncio.run(run_paper_loop(stop_event))
 
 
-async def _safe_force_close() -> int:
+async def _safe_force_close() -> tuple[int, str | None]:
     try:
-        return await force_close_open_positions("STOP_REQUEST")
-    except Exception:  # noqa: BLE001
-        return 0
+        return await force_close_open_positions("STOP_REQUEST"), None
+    except Exception as e:  # noqa: BLE001
+        error = f"{type(e).__name__}: {e}"
+        log.warning("btc.stop_force_close_failed", error=error)
+        return 0, error

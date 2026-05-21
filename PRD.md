@@ -1,91 +1,60 @@
-# PRD: Crypto Trading Ops Demo
+# PRD: BTC 5-Minute Paper Trading Demo
 
-## Goal
+## Product Goal
 
-Build one local dashboard that can be shown in interviews as a compact crypto trading-operations system:
+Build a focused local dashboard that demonstrates BTC 5-minute Polymarket
+trading operations without live execution risk.
 
-1. Run and monitor a **BTC 5-minute paper trader** with clear risk controls and ledgered lifecycle events.
-2. Keep **weather bets** as a separate research-only module that shows analysis breadth but does not distract from the trading-ops demo.
+The user should be able to press **Start** to run a paper BTC bot and press
+**Stop** to halt it. The app should expose enough state to discuss strategy,
+risk controls, operations, and future live-execution work in interviews.
 
-## Interview Demo Requirements
+## Scope
 
-- Show live crypto market discovery and signal generation.
-- Show configurable parameters and risk gates.
-- Show paper execution, reconciliation, and PnL in SQLite.
-- Show monitoring surfaces useful for shift coverage.
-- Be safe to share publicly: no `.env`, no private keys, no live order path in paper mode.
+In scope:
 
-## Track 1: Weather Bets
+- Discover current BTC 5-minute Up/Down Polymarket markets.
+- Use public BTC spot data as a paper-mode feed.
+- Show the intended Chainlink Data Streams reference in the dashboard.
+- Compute a simple fair Up probability and edge versus market price.
+- Size simulated trades between $1 and $5 by confidence.
+- Persist every tick, simulated position, exit, and dashboard event in SQLite.
+- Provide dashboard Start, Stop, Refresh, activity feed, and summary metrics.
+- Summarize the optional exported BTC Polymarket history CSV.
 
-Weather remains manual.
+Out of scope:
 
-- Scan active Polymarket weather markets.
-- Estimate bucket probabilities using Open-Meteo historical and forecast data.
-- Surface gaps between market price and synthetic probability.
-- Log recommendations for hit-rate, calibration, and hypothetical $1 PnL tracking.
-- User places all weather trades manually in Polymarket.
-- No weather auto-execution.
+- Live order signing.
+- Private key handling.
+- Remote deployment.
+- Any non-BTC market.
+- Any timeframe other than 5-minute Up/Down.
 
-## Track 2: BTC 5-Minute Bot
+## User Flow
 
-BTC automation is now an approved repo direction.
-
-The bot should:
-
-- Trade only BTC 5-minute Polymarket Up/Down markets.
-- Be controlled from the dashboard with Start and Stop.
-- Use a dedicated local trading wallet.
-- Keep private keys only in local `.env`.
-- Paper trade with confidence-based `$1-$5` notional.
-- Keep future live mode at fixed `$1` until explicitly changed.
-- Enforce one position per market window.
-- Refuse new entries when feeds are stale or risk gates fail.
-- Persist signals, orders, fills, positions, exits, PnL, and errors to SQLite.
-- Expose current state, feed health, latest signal, open position, and last errors in the dashboard.
-
-## BTC Start/Stop Semantics
-
-- **Start:** enable the BTC paper loop. It may open/manage simulated BTC positions only.
-- **Stop:** immediately disable new simulated entries. Any open paper position is closed by the paper loop rules or window rollover.
-- **Crash/restart:** recover paper state from SQLite before resuming. Live recovery is a later implementation.
+1. User runs `./.venv/bin/python main.py`.
+2. User opens `http://127.0.0.1:7860`.
+3. User presses **Start BTC Paper Bot**.
+4. Bot loops every configured tick interval.
+5. Bot records market state, signal, and any simulated entries/exits.
+6. User presses **Stop**.
+7. Bot prevents new entries and closes any open simulated position.
 
 ## Risk Rules
 
-- Local-only live execution.
-- Dedicated wallet only.
-- Paper sizing is `$1-$5` by confidence.
-- Future live sizing remains `$1` by default.
-- One position per BTC 5-minute market.
-- No new entries on stale feeds.
-- No secrets in logs, UI, git, or chat.
-- No external notifications for now.
+- Paper mode is the only active mode.
+- Trade size is $1-$5 by confidence.
+- Only BTC 5-minute Up/Down markets are eligible.
+- One open BTC paper position is allowed at a time.
+- Late-window entries are skipped.
+- Stale or failed feeds surface in logs/dashboard state.
+- Stop acts as a kill switch.
 
-## Non-Goals
+## Success Criteria
 
-- No copy-wallet watchlist.
-- No leaderboard scoring.
-- No black swan scanner.
-- No election, macro, quant, or generic deep research analyzers.
-- No weather auto-execution.
-- No non-BTC assets until BTC works.
-- No public deployment of live executor.
-
-## Active Dashboard Tabs
-
-- **Home:** weather counts, BTC status, activity feed.
-- **Weather:** market scanner and single-URL analysis.
-- **Portfolio:** read-only Polymarket positions and weather rec-vs-actual tracking.
-- **Performance:** resolve settled recommendations and refit weather calibrator.
-- **BTC 5m:** Start/Stop, state, feed health, latest signal, position, errors.
-- **Settings:** active scope and safety state.
-
-## Acceptance Criteria
-
-- `python main.py` launches locally at `127.0.0.1:7860`.
-- No copy-wallet jobs run on startup.
-- Weather scanner can run from the dashboard.
-- Single weather URL analysis can run when `HF_TOKEN` is set.
-- Portfolio tab works when `MY_POLYMARKET_PROXY_ADDRESS` is set.
-- BTC tab exposes Start/Stop, current paper state, latest signal, open paper position, and recent paper trades.
-- BTC paper loop can run without private keys or live order credentials.
-- BTC live executor only starts when implementation, local credentials, and risk config are complete.
+- Dashboard has no unrelated tabs or modules.
+- Start begins paper trading without requiring secrets.
+- Stop halts new entries immediately.
+- SQLite records ticks, positions, and activity.
+- CLI snapshot prints current risk, PnL, and history baseline.
+- Repo can be shown as a clean, job-relevant trading-ops demo.

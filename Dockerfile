@@ -3,7 +3,8 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    DATA_DIR=/data
+    DATA_DIR=/data \
+    DB_PATH=/data/btc_5m_demo.db
 
 WORKDIR /app
 
@@ -16,7 +17,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 
-# HF Space Pro mounts persistent storage at /data
 RUN mkdir -p /data
 
 EXPOSE 7860

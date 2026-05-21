@@ -121,13 +121,15 @@ async def paper_tick_once() -> PaperSnapshot:
 
 async def force_close_open_positions(exit_reason: str = "STOP_REQUEST") -> int:
     """Close all open paper positions at the latest available paper price."""
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-        snapshot = await _build_snapshot(client)
     async with connect() as db:
         async with db.execute(
             "SELECT * FROM btc_paper_positions WHERE state = 'open' ORDER BY opened_at"
         ) as cur:
             positions = [dict(r) for r in await cur.fetchall()]
+    if not positions:
+        return 0
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+        snapshot = await _build_snapshot(client)
     for pos in positions:
         await _close_position(
             pos,
@@ -431,9 +433,7 @@ async def _maybe_open_position(snapshot: PaperSnapshot) -> None:
         return
     async with connect() as db:
         async with db.execute(
-            "SELECT COUNT(*) AS n FROM btc_paper_positions "
-            "WHERE state = 'open' AND window_slug = ?",
-            (snapshot.window_slug,),
+            "SELECT COUNT(*) AS n FROM btc_paper_positions WHERE state = 'open'"
         ) as cur:
             if (await cur.fetchone())["n"]:
                 return
@@ -447,8 +447,9 @@ async def _maybe_open_position(snapshot: PaperSnapshot) -> None:
             """
             INSERT INTO btc_paper_positions(
               opened_at, window_slug, market_question, side, state, entry_price,
-              notional_usd, shares, opened_spot, confidence, entry_reason
-            ) VALUES (?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?)
+              notional_usd, shares, opened_spot, confidence, edge, entry_reason,
+              feed_source
+            ) VALUES (?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 snapshot.created_at,
@@ -460,7 +461,9 @@ async def _maybe_open_position(snapshot: PaperSnapshot) -> None:
                 shares,
                 snapshot.spot_price,
                 snapshot.confidence,
+                snapshot.edge,
                 snapshot.reason,
+                snapshot.feed_source,
             ),
         )
         await db.commit()

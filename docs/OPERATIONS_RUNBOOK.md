@@ -1,50 +1,47 @@
 # Operations Runbook
 
-## Pre-Shift Checklist
-
-- Confirm the dashboard is reachable at `http://127.0.0.1:7860`.
-- Confirm **BTC 5m** shows `Mode: paper`.
-- Confirm **Risk and operations state** is `OK` or understand why it is idle/stale.
-- Confirm latest feed source is visible and explicitly marked as the paper fallback.
-- Confirm open exposure is expected before pressing Start.
-
-## Normal Monitoring Loop
-
-- Watch **Latest signal** for side, confidence, notional, and skip/entry reason.
-- Watch **Open exposure** and **Open paper positions**.
-- Watch **Last tick** age; if stale, press Stop and investigate network/API health.
-- Review recent positions for exit reasons: `TARGET`, `STOP`, `TIME`, `BAND_REENTRY`, `WINDOW_ROLL`, or `STOP_REQUEST`.
-
-## Stop / Kill Switch
-
-Press **Stop BTC bot** in the dashboard.
-
-Expected behavior:
-
-- Bot state changes to `stopped`.
-- New simulated entries are disabled.
-- Any open paper position is force-closed with exit reason `STOP_REQUEST`.
-- Activity feed records the stop event.
-
-## Reconciliation
-
-Use the dashboard or CLI snapshot:
+## Start Locally
 
 ```bash
-python tools/demo_snapshot.py
+./.venv/bin/python main.py
 ```
 
-Useful SQLite checks:
+Open:
+
+```text
+http://127.0.0.1:7860
+```
+
+## Paper Trading
+
+- Press **Start BTC Paper Bot** to begin the BTC 5-minute paper loop.
+- Press **Stop** to halt new paper entries and force-close open simulated
+  positions.
+- Use **Refresh** if you want an immediate dashboard update between timer ticks.
+
+## Health Checks
 
 ```bash
-sqlite3 data/polymarket_local.db "SELECT state, COUNT(*), SUM(notional_usd), SUM(realized_pnl_usd) FROM btc_paper_positions GROUP BY state;"
-sqlite3 data/polymarket_local.db "SELECT opened_at, side, entry_price, exit_price, notional_usd, realized_pnl_usd, exit_reason FROM btc_paper_positions ORDER BY position_id DESC LIMIT 10;"
-sqlite3 data/polymarket_local.db "SELECT created_at, window_slug, signal_side, confidence, notional_usd, reason FROM btc_paper_ticks ORDER BY tick_id DESC LIMIT 10;"
+./.venv/bin/python tools/demo_snapshot.py
 ```
 
-## Incident Notes
+Expected:
 
-- If market discovery fails, verify Polymarket Gamma is serving the current `btc-updown-5m-*` slug.
-- If BTC spot fails, verify Binance public API access from the local network.
-- If DB writes fail, verify `DATA_DIR` and `DB_PATH` are writable.
-- If paper PnL diverges from intuition, inspect recent ticks and exit reasons before changing thresholds.
+- Risk state is `OK`, `IDLE`, or an explicit stale/feed state.
+- Open positions are `0` or `1`.
+- Activity feed contains BTC bot events.
+
+## Common Issues
+
+- If the dashboard port is busy, stop the old process or change
+  `DASHBOARD_SERVER_PORT`.
+- If no current BTC market is found, wait for the next 5-minute boundary and
+  refresh.
+- If public BTC spot data is unavailable, the paper loop surfaces the error in
+  logs and dashboard detail instead of opening silent entries.
+
+## Data
+
+SQLite lives at `DB_PATH`, defaulting to `./data/btc_5m_demo.db`.
+
+The `data/` directory is local and gitignored.
