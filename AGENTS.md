@@ -21,6 +21,8 @@ The only active product behavior is:
 - The dashboard must stay local by default at `127.0.0.1:7860`.
 - Start means paper trade; Stop means stop.
 - One open BTC paper position at a time.
+- Current optimized paper profile keeps a 4.5 percentage-point edge floor,
+  uses a 60-second late-entry cutoff, and sizes $1-$5 by confidence.
 - No silent failures. Feed, market, state, or execution-loop errors must appear
   in structured logs or dashboard state.
 - Keep modules small and boundaries clear.

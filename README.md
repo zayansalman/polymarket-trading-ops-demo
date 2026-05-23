@@ -73,7 +73,8 @@ BTC_PAPER_MIN_TRADE_USD=1
 BTC_PAPER_MAX_TRADE_USD=5
 BTC_PAPER_TICK_SECONDS=5
 BTC_PAPER_ENTRY_EDGE_MIN=0.045
-BTC_PAPER_MIN_CONFIDENCE=0.62
+BTC_PAPER_MIN_CONFIDENCE=0.50
+BTC_PAPER_ENTRY_MIN_REMAINING_SECONDS=60
 BTC_PAPER_TARGET_RETURN=0.10
 BTC_PAPER_STOP_RETURN=-0.08
 BTC_PAPER_TIME_EXIT_SECONDS=45
@@ -86,9 +87,12 @@ BTC_HISTORY_CSV_PATH=./data/polymarket_history.csv
 - `dashboard.py` - BTC-only Gradio operator surface.
 - `btc_bot/paper.py` - paper market discovery, signal, simulated entry/exit,
   and ledger logic.
+- `btc_bot/strategy.py` - shared probability, confidence, and sizing math.
+- `btc_bot/backtest.py` - historical replay and parameter optimizer.
 - `btc_bot/controller.py` - Start/Stop control and kill-switch behavior.
 - `btc_bot/history.py` - optional BTC history CSV summary for sizing context.
 - `db.py` - SQLite schema for config, activity feed, ticks, and positions.
+- `docs/BACKTESTING.md` - local backtest methodology and limitations.
 - `docs/ROADMAP.md` - engineering roadmap for trading-system maturity.
 - `tools/demo_snapshot.py` - CLI snapshot for local operator review.
 
@@ -106,3 +110,12 @@ BTC_HISTORY_CSV_PATH=./data/polymarket_history.csv
 ```bash
 ./.venv/bin/python tools/demo_snapshot.py
 ```
+
+## Backtest And Optimize
+
+```bash
+./.venv/bin/python tools/backtest_btc_strategy.py
+```
+
+This writes a local JSON report to `./data/backtests/latest.json`. The
+methodology is documented in `docs/BACKTESTING.md`.

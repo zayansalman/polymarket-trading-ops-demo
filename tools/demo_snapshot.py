@@ -11,6 +11,8 @@ if str(ROOT) not in sys.path:
 
 from btc_bot.history import load_btc_history_stats
 from btc_bot.paper import load_paper_summary
+from btc_bot.backtest import format_report
+from config import DATA_DIR
 from db import init_db
 
 
@@ -51,6 +53,12 @@ async def main() -> None:
         print("## History Baseline")
         print()
         print(f"- Optional CSV not found at {history.path}")
+    report_path = DATA_DIR / "backtests" / "latest.json"
+    if report_path.exists():
+        import json
+
+        print()
+        print(format_report(json.loads(report_path.read_text(encoding="utf-8"))))
 
 
 if __name__ == "__main__":

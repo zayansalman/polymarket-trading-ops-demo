@@ -22,11 +22,15 @@ moving it toward the engineering shape expected of serious trading systems.
    feed-source metadata. This makes signals reproducible instead of only
    explainable after the fact.
 
-2. **Replay And Backtest Harness**
+2. **Full-Market Replay And Backtest Harness**
 
    Add a deterministic replay mode that runs the signal engine over recorded
    market data. Include basic market-friction assumptions: stale quotes,
    bid/ask spread, late-window liquidity, and no-fill cases.
+
+   Current status: the repo has a trade-history conditional backtest in
+   `btc_bot/backtest.py`. It is useful for optimizing filters over historical
+   user buys, but it is not yet a full-market replay.
 
 3. **Order Lifecycle Simulator**
 
@@ -48,7 +52,7 @@ moving it toward the engineering shape expected of serious trading systems.
 
 6. **Research-To-Production Boundary**
 
-   Separate signal research from execution state. A candidate signal should be
+   Separate signal research from execution state. A new signal should be
    testable in replay before it is allowed in the live paper loop.
 
 7. **Operational Runbooks And Incidents**

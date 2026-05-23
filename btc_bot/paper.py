@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import math
-import statistics
 import threading
 import time
 from dataclasses import dataclass
@@ -22,6 +20,7 @@ from config import (
     BTC_CHAINLINK_STREAM_URL,
     BTC_MARKET_TIMEFRAME_MINUTES,
     BTC_PAPER_ENTRY_EDGE_MIN,
+    BTC_PAPER_ENTRY_MIN_REMAINING_SECONDS,
     BTC_PAPER_MAX_TRADE_USD,
     BTC_PAPER_MIN_CONFIDENCE,
     BTC_PAPER_MIN_TRADE_USD,
@@ -33,12 +32,24 @@ from config import (
 )
 from db import connect, notify, set_config
 from logging_setup import get_logger
+from btc_bot.strategy import (
+    StrategyParams,
+    fair_up_probability,
+    sigma_per_second,
+    signal_from_edge,
+)
 
 log = get_logger("btc_paper")
 
 BINANCE_API = "https://api.binance.com"
 FIVE_MINUTES = BTC_MARKET_TIMEFRAME_MINUTES * 60
-ENTRY_MIN_REMAINING_SECONDS = 90
+STRATEGY_PARAMS = StrategyParams(
+    min_trade_usd=BTC_PAPER_MIN_TRADE_USD,
+    max_trade_usd=BTC_PAPER_MAX_TRADE_USD,
+    entry_edge_min=BTC_PAPER_ENTRY_EDGE_MIN,
+    min_confidence=BTC_PAPER_MIN_CONFIDENCE,
+    entry_min_remaining_seconds=BTC_PAPER_ENTRY_MIN_REMAINING_SECONDS,
+)
 
 
 @dataclass
@@ -229,11 +240,17 @@ async def _build_snapshot(client: httpx.AsyncClient) -> PaperSnapshot:
 
     spot, closes = await _fetch_spot_and_recent_closes(client)
     reference = await _fetch_reference_price(client, start_ts)
-    sigma = _sigma_per_second(closes)
+    sigma = sigma_per_second(closes)
     up_price, down_price = _outcome_prices(market)
-    fair_up = _fair_up_probability(spot, reference, sigma, remaining)
+    fair_up = fair_up_probability(spot, reference, sigma, remaining)
     edge = fair_up - up_price
-    side, confidence, notional, reason = _signal(edge, remaining, up_price, down_price)
+    side, confidence, notional, reason = signal_from_edge(
+        edge,
+        remaining,
+        up_price,
+        down_price,
+        STRATEGY_PARAMS,
+    )
 
     return PaperSnapshot(
         created_at=datetime.now(UTC).isoformat(timespec="seconds"),
@@ -343,56 +360,6 @@ def _first(value: Any) -> dict[str, Any] | None:
         first = value[0]
         return first if isinstance(first, dict) else None
     return None
-
-
-def _sigma_per_second(closes: list[float]) -> float:
-    returns = [
-        math.log(closes[i] / closes[i - 1])
-        for i in range(1, len(closes))
-        if closes[i] > 0 and closes[i - 1] > 0
-    ]
-    if len(returns) < 2:
-        return 0.00002
-    # Floor prevents a quiet 90s sample from producing false certainty.
-    return max(statistics.stdev(returns), 0.00002)
-
-
-def _fair_up_probability(
-    spot: float, reference: float, sigma_per_second: float, remaining_seconds: int
-) -> float:
-    if spot <= 0 or reference <= 0:
-        return 0.5
-    denom = sigma_per_second * math.sqrt(max(remaining_seconds, 1))
-    if denom <= 0:
-        return 0.5
-    z = math.log(spot / reference) / denom
-    return min(0.995, max(0.005, 0.5 * (1 + math.erf(z / math.sqrt(2)))))
-
-
-def _signal(
-    edge: float, remaining_seconds: int, up_price: float, down_price: float
-) -> tuple[str | None, float, float, str]:
-    edge_abs = abs(edge)
-    confidence = min(0.99, max(0.0, 0.50 + edge_abs * 2.8))
-    if remaining_seconds <= ENTRY_MIN_REMAINING_SECONDS:
-        return None, confidence, 0.0, "skip: too close to window end"
-    if edge_abs < BTC_PAPER_ENTRY_EDGE_MIN or confidence < BTC_PAPER_MIN_CONFIDENCE:
-        return None, confidence, 0.0, "skip: edge/confidence below threshold"
-    side = "Up" if edge > 0 else "Down"
-    entry_price = up_price if side == "Up" else down_price
-    if entry_price < 0.05 or entry_price > 0.95:
-        return None, confidence, 0.0, "skip: entry price too extreme for paper fill model"
-    notional = _notional_from_confidence(confidence)
-    return side, confidence, notional, f"enter {side}: edge {edge:+.3f}"
-
-
-def _notional_from_confidence(confidence: float) -> float:
-    if confidence < BTC_PAPER_MIN_CONFIDENCE:
-        return 0.0
-    span = max(BTC_PAPER_MAX_TRADE_USD - BTC_PAPER_MIN_TRADE_USD, 0)
-    scaled = (confidence - BTC_PAPER_MIN_CONFIDENCE) / max(0.99 - BTC_PAPER_MIN_CONFIDENCE, 0.01)
-    raw = BTC_PAPER_MIN_TRADE_USD + span * min(max(scaled, 0.0), 1.0)
-    return float(round(min(max(raw, BTC_PAPER_MIN_TRADE_USD), BTC_PAPER_MAX_TRADE_USD)))
 
 
 async def _log_tick(snapshot: PaperSnapshot) -> None:

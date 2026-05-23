@@ -22,6 +22,7 @@ In scope:
 - Persist every tick, simulated position, exit, and dashboard event in SQLite.
 - Provide dashboard Start, Stop, Refresh, activity feed, and summary metrics.
 - Summarize the optional exported BTC Polymarket history CSV.
+- Run a local trade-history conditional backtest and parameter grid optimizer.
 - Present a concise systems scorecard covering scope, risk, feed discipline,
   auditability, and failure visibility.
 - Maintain a public engineering roadmap focused on market-data recording,
@@ -63,4 +64,5 @@ Out of scope:
 - Stop halts new entries immediately.
 - SQLite records ticks, positions, and activity.
 - CLI snapshot prints current risk, PnL, and history baseline.
+- Backtest CLI writes a local report and updates dashboard-visible results.
 - Repo can be shared as a clean BTC trading systems lab.

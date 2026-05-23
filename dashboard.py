@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from datetime import UTC, datetime
 from html import escape
 from typing import Any
@@ -13,6 +14,7 @@ from btc_bot.history import load_btc_history_stats
 from btc_bot.paper import load_paper_summary
 from config import (
     BTC_CHAINLINK_STREAM_URL,
+    DATA_DIR,
     BTC_HISTORY_CSV_PATH,
     BTC_PAPER_ENTRY_EDGE_MIN,
     BTC_PAPER_MAX_TRADE_USD,
@@ -28,6 +30,7 @@ from config import (
 )
 from db import connect
 from logging_setup import get_logger
+from btc_bot.backtest import format_report
 
 log = get_logger("dashboard")
 
@@ -375,6 +378,20 @@ def _settings_markdown() -> str:
     )
 
 
+def _backtest_markdown() -> str:
+    report_path = DATA_DIR / "backtests" / "latest.json"
+    if not report_path.exists():
+        return (
+            "### BTC Strategy Backtest\n"
+            "No local report yet. Run:\n\n"
+            "```bash\n"
+            "./.venv/bin/python tools/backtest_btc_strategy.py\n"
+            "```"
+        )
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    return format_report(report)
+
+
 def _btc_views() -> tuple[str, str, str, str, str]:
     return (
         _overview_html(),
@@ -427,6 +444,10 @@ def build_ui() -> gr.Blocks:
             paper = gr.HTML(value=initial[2])
         with gr.Tab("Activity"):
             activity = gr.Markdown(value=initial[4])
+        with gr.Tab("Backtest"):
+            backtest = gr.Markdown(value=_backtest_markdown())
+            refresh_backtest = gr.Button("Refresh backtest report", variant="secondary")
+            refresh_backtest.click(fn=_backtest_markdown, outputs=[backtest])
         with gr.Tab("Settings"):
             gr.Markdown(value=_settings_markdown())
 
