@@ -1,10 +1,10 @@
-# PRD: BTC 5-Minute Trading Systems Lab
+# PRD: BTC 5m Binary Fair Value
 
 ## Product Goal
 
-Build a focused local dashboard for BTC 5-minute Polymarket paper trading that
-is useful to operate personally and clear enough to evaluate as a trading
-systems project.
+Build a focused local dashboard for the BTC 5-minute binary fair-value
+strategy that is useful to operate personally and clear enough to evaluate as a
+trading systems project.
 
 The user should be able to press **Start** to run a paper BTC bot and press
 **Stop** to halt it. The app should expose enough state to review strategy,
@@ -65,4 +65,4 @@ Out of scope:
 - SQLite records ticks, positions, and activity.
 - CLI snapshot prints current risk, PnL, and history baseline.
 - Backtest CLI writes a local report and updates dashboard-visible results.
-- Repo can be shared as a clean BTC trading systems lab.
+- Repo can be shared as a clean BTC 5-minute binary fair-value strategy lab.

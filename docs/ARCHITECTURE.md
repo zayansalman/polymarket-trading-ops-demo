@@ -1,6 +1,7 @@
 # Architecture
 
-The app is deliberately small and operator-oriented:
+The app is deliberately small and operator-oriented around one strategy:
+BTC 5-minute binary fair value.
 
 ```mermaid
 flowchart LR

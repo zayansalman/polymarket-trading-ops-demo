@@ -1,7 +1,7 @@
-# BTC 5-Minute Trading Systems Lab
+# BTC 5m Binary Fair Value
 
-This repository is a single-purpose, local-only trading systems lab for BTC
-5-minute Polymarket Up/Down paper trading.
+This repository is a local-only strategy lab for **BTC 5-minute binary fair
+value** trading on Polymarket Up/Down markets.
 
 The workflow is intentionally narrow:
 
@@ -21,10 +21,17 @@ The project is built to be useful day-to-day while also showing trading-system
 thinking: market discovery, signal logging, confidence-based sizing, risk
 controls, persistence, and an operator kill switch.
 
-It is intentionally not marketed as a production HFT engine. The value is in
-the engineering discipline that HFT and market-making teams also care about:
-explicit state, observable failures, small risk surface, and a clean path from
-paper trading to future execution/reconciliation work.
+It is intentionally not marketed as a production HFT engine or proven live
+alpha. The value is in the engineering discipline that HFT and market-making
+teams also care about: explicit state, observable failures, small risk surface,
+and a clean path from paper trading to future execution/reconciliation work.
+
+## Strategy Name
+
+**BTC 5m Binary Fair Value** estimates the fair probability that BTC finishes
+Up or Down over a fixed five-minute event window, compares that fair value to
+the market-implied price, and paper trades only when edge, time-left, and risk
+filters pass.
 
 ## Systems Scorecard
 
@@ -64,7 +71,7 @@ http://127.0.0.1:7860
 
 ```bash
 DATA_DIR=./data
-DB_PATH=./data/btc_5m_lab.db
+DB_PATH=./data/btc_5m_binary_fair_value.db
 DASHBOARD_SERVER_NAME=127.0.0.1
 DASHBOARD_SERVER_PORT=7860
 

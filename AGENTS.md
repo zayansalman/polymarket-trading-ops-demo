@@ -2,7 +2,7 @@
 
 ## Active Scope
 
-This repository is a local-only BTC 5-minute Polymarket trading systems lab.
+This repository is a local-only BTC 5-minute binary fair-value strategy lab.
 
 The only active product behavior is:
 

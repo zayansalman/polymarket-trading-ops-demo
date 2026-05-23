@@ -24,7 +24,7 @@ async def main() -> None:
     avg_pnl = "n/a" if paper.avg_pnl_usd is None else f"${paper.avg_pnl_usd:+.2f}"
     avg_hold = "n/a" if paper.avg_hold_seconds is None else f"{paper.avg_hold_seconds:.0f}s"
 
-    print("# BTC Trading Systems Snapshot")
+    print("# BTC 5m Binary Fair Value Snapshot")
     print()
     print(f"- Risk state: {paper.risk_state}")
     print(f"- Last tick: {paper.last_tick_at or 'never'}")

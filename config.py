@@ -1,4 +1,4 @@
-"""Configuration for the local BTC 5-minute trading systems lab."""
+"""Configuration for the local BTC 5-minute binary fair-value strategy lab."""
 from __future__ import annotations
 
 import os
@@ -30,7 +30,7 @@ DATA_DIR = Path(os.getenv("DATA_DIR", "./data")).expanduser().resolve()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = Path(
-    os.getenv("DB_PATH", str(DATA_DIR / "btc_5m_lab.db"))
+    os.getenv("DB_PATH", str(DATA_DIR / "btc_5m_binary_fair_value.db"))
 ).expanduser().resolve()
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 

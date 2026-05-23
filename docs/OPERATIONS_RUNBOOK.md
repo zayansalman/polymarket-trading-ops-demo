@@ -1,6 +1,6 @@
 # Operations Runbook
 
-This runbook is for the local BTC 5-minute trading systems lab. The goal is to
+This runbook is for the local BTC 5-minute binary fair-value strategy lab. The goal is to
 make operation boring: visible state, bounded paper risk, and fast Stop behavior.
 
 ## Start Locally
@@ -46,6 +46,6 @@ Expected:
 
 ## Data
 
-SQLite lives at `DB_PATH`, defaulting to `./data/btc_5m_lab.db`.
+SQLite lives at `DB_PATH`, defaulting to `./data/btc_5m_binary_fair_value.db`.
 
 The `data/` directory is local and gitignored.

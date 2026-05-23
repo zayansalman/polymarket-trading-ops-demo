@@ -1,6 +1,7 @@
 # Backtesting
 
-The repo includes a repeatable local backtest for the BTC 5-minute strategy.
+The repo includes a repeatable local backtest for the BTC 5m Binary Fair Value
+strategy.
 
 ```bash
 ./.venv/bin/python tools/backtest_btc_strategy.py
