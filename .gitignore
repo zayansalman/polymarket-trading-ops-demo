@@ -20,3 +20,4 @@ archive/
 .idea/
 .vscode/
 *.log
+*.egg-info/

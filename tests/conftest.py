@@ -2,11 +2,23 @@
 
 from __future__ import annotations
 
+import asyncio
 import math
+from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from btc_5m_fv.core.interfaces import (
+    AbstractExecutionManager,
+    AbstractMarketConnector,
+    AbstractPriceConnector,
+    AbstractRiskService,
+    AbstractSignalGenerator,
+)
 from btc_5m_fv.core.types import (
     BacktestParams,
     MarketWindow,
@@ -17,7 +29,9 @@ from btc_5m_fv.core.types import (
     Signal,
     SignalAction,
     StrategyParams,
+    Tick,
 )
+from btc_5m_fv.ops.telemetry import FeedHealthTracker, LatencyTracker
 
 
 # ---------------------------------------------------------------------------
@@ -82,7 +96,227 @@ def backtest_params() -> BacktestParams:
 
 
 # ---------------------------------------------------------------------------
-# Domain object fixtures
+# Deterministic domain object fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def fixture_market_window() -> MarketWindow:
+    """Deterministic MarketWindow for reproducible tests.
+
+    Uses a fixed epoch timestamp (2024-01-01 00:00:00 UTC) so that
+    all derived calculations are bit-for-bit identical across runs.
+    """
+    return MarketWindow(
+        slug="btc-updown-5m-1704067200",
+        question="Bitcoin Up or Down - Jan 01, 2024?",
+        start_ts=1704067200,
+        end_ts=1704067500,
+        up_price=0.52,
+        down_price=0.48,
+    )
+
+
+@pytest.fixture
+def fixture_tick_series(fixture_market_window: MarketWindow) -> list[Tick]:
+    """List of 10 deterministic Ticks for testing tick-loop logic.
+
+    Prices drift upward from 42_000 to 42_090 over 10 ticks (1 tick/second).
+    Each tick has a SKIP signal except the 5th which has a synthetic ENTER_UP.
+    """
+    base_ts = datetime(2024, 1, 1, 0, 1, 0, tzinfo=timezone.utc)
+    ticks: list[Tick] = []
+    for i in range(10):
+        price = 42_000.0 + i * 10.0
+        action = SignalAction.ENTER_UP if i == 4 else SignalAction.SKIP
+        side = Side.UP if i == 4 else None
+        confidence = 0.75 if i == 4 else 0.40
+        notional = 3.0 if i == 4 else 0.0
+        edge = 0.08 if i == 4 else 0.02
+        signal = Signal(
+            action=action,
+            side=side,
+            confidence=confidence,
+            notional_usd=notional,
+            edge=edge,
+            fair_up_prob=0.55 + i * 0.005,
+            reason=f"tick {i}: {action.name}",
+        )
+        ticks.append(
+            Tick(
+                ts=base_ts.replace(second=i),
+                window=fixture_market_window,
+                spot_price=price,
+                reference_price=42_000.0,
+                sigma_per_second=0.00015 + i * 0.00001,
+                fair_up_prob=0.55 + i * 0.005,
+                signal=signal,
+                feed_source="binance",
+            )
+        )
+    return ticks
+
+
+@pytest.fixture
+def fixture_price_series() -> list[float]:
+    """50-point deterministic BTC price series.
+
+    Synthetic prices oscillating around 42_000 with controlled volatility
+    (~0.02% per step).  The series is fully deterministic — same seed
+    produces identical values.
+    """
+    base = 42_000.0
+    prices: list[float] = [base]
+    for i in range(1, 50):
+        # Oscillate between positive and negative moves
+        direction = 1.0 if i % 4 in (0, 1) else -1.0
+        prices.append(base * (1 + 0.0002 * direction))
+        base = prices[-1]
+    return prices
+
+
+@pytest.fixture
+def fixture_signal_params() -> StrategyParams:
+    """StrategyParams with well-known test values for signal validation."""
+    return StrategyParams(
+        min_trade_usd=1.0,
+        max_trade_usd=5.0,
+        entry_edge_min=0.045,
+        min_confidence=0.50,
+        entry_min_remaining_seconds=60,
+        max_entry_price=0.95,
+        min_entry_price=0.05,
+    )
+
+
+@pytest.fixture
+def fixture_backtest_params() -> BacktestParams:
+    """BacktestParams with test values for backtest harness tests."""
+    return BacktestParams(
+        entry_edge_min=0.04,
+        min_confidence=0.50,
+        min_remaining_seconds=60,
+        max_entry_price=0.95,
+        min_trade_usd=1.0,
+        max_trade_usd=5.0,
+        min_entry_price=0.05,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Mock component fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def mock_connector_registry() -> MagicMock:
+    """Registry with mocked price and market connectors.
+
+    Returns a MagicMock that behaves like a ConnectorRegistry but
+    uses AsyncMock for all async health check methods.
+    """
+    mock_price = MagicMock(spec=AbstractPriceConnector)
+    mock_price.get_spot_and_recent_closes = AsyncMock(
+        return_value=(42_000.0, [41_900.0, 41_950.0, 42_000.0])
+    )
+    mock_price.get_reference_price = AsyncMock(return_value=42_000.0)
+    mock_price.health_check = AsyncMock(
+        return_value={"ok": True, "latency_ms": 45.0, "detail": "nominal"}
+    )
+
+    mock_market = MagicMock(spec=AbstractMarketConnector)
+    mock_market.discover_current_window = AsyncMock(
+        return_value=MarketWindow(
+            slug="btc-updown-5m-1704067200",
+            question="Bitcoin Up or Down?",
+            start_ts=1704067200,
+            end_ts=1704067500,
+            up_price=0.52,
+            down_price=0.48,
+        )
+    )
+    mock_market.health_check = AsyncMock(
+        return_value={"ok": True, "latency_ms": 30.0, "detail": "nominal"}
+    )
+
+    registry = MagicMock()
+    registry.get_primary_price = MagicMock(return_value=mock_price)
+    registry.get_primary_market = MagicMock(return_value=mock_market)
+    registry.list_price_connectors = MagicMock(return_value=["primary"])
+    registry.list_market_connectors = MagicMock(return_value=["polymarket"])
+    registry.health_check_all = AsyncMock(
+        return_value={
+            "primary": {"ok": True, "latency_ms": 45.0, "detail": "nominal"},
+            "polymarket": {"ok": True, "latency_ms": 30.0, "detail": "nominal"},
+        }
+    )
+    registry._mock_price = mock_price
+    registry._mock_market = mock_market
+    return registry
+
+
+@pytest.fixture
+def mock_execution_manager() -> MagicMock:
+    """ExecutionManager with mocked order/position lifecycle methods.
+
+    All async methods return sensible defaults so that tick-loop tests
+    can run without a real database or exchange connection.
+    """
+    mgr = MagicMock(spec=AbstractExecutionManager)
+
+    mgr.submit_order = AsyncMock(
+        return_value=PaperOrder(
+            order_id=1,
+            created_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            window_slug="btc-updown-5m-1704067200",
+            side=Side.UP,
+            state=OrderState.FILLED,
+            requested_notional=3.0,
+            filled_notional=3.0,
+            entry_price=0.52,
+            confidence=0.75,
+            edge=0.08,
+            feed_source="binance",
+        )
+    )
+    mgr.check_exits = AsyncMock(return_value=None)
+    mgr.force_close_all = AsyncMock(return_value=[])
+    return mgr
+
+
+@pytest.fixture
+def tmp_db_path(tmp_path: Path) -> Path:
+    """Temporary SQLite database file for isolated tests.
+
+    The file is created under pytest's ``tmp_path`` fixture so it is
+    automatically cleaned up after each test.
+    """
+    return tmp_path / "test_telemetry.db"
+
+
+# ---------------------------------------------------------------------------
+# Telemetry fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+async def feed_tracker(tmp_db_path: Path) -> AsyncGenerator[FeedHealthTracker, None]:
+    """Initialised :class:`FeedHealthTracker` pointing at a temp database."""
+    tracker = FeedHealthTracker(window_seconds=3600)
+    await tracker.init_db(tmp_db_path)
+    yield tracker
+
+
+@pytest.fixture
+async def latency_tracker(tmp_db_path: Path) -> AsyncGenerator[LatencyTracker, None]:
+    """Initialised :class:`LatencyTracker` pointing at a temp database."""
+    tracker = LatencyTracker(max_samples=1000)
+    await tracker.init_db(tmp_db_path)
+    yield tracker
+
+
+# ---------------------------------------------------------------------------
+# Domain object fixtures (legacy — kept for backward compat)
 # ---------------------------------------------------------------------------
 
 
