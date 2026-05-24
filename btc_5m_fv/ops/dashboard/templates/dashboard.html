@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{# ───────── Tab 1: Overview ───────── #}
+<div id="tab-overview" class="tab-content active">
+  <div id="overview-content">
+    {{ overview.html | safe }}
+  </div>
+  <div class="panel md-content">
+    {{ brief | safe }}
+  </div>
+  <div class="panel md-content">
+    {{ scorecard | safe }}
+  </div>
+  <div id="history-content" class="panel md-content">
+    {{ history | safe }}
+  </div>
+</div>
+
+{# ───────── Tab 2: BTC 5m ───────── #}
+<div id="tab-btc5m" class="tab-content">
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="handleStart()">Start BTC Paper Bot</button>
+    <button class="btn btn-stop" onclick="handleStop()">Stop</button>
+    <button class="btn btn-secondary" onclick="handleRefresh()">Refresh</button>
+  </div>
+  <div id="status-content" class="panel md-content">
+    {{ status | safe }}
+  </div>
+  <div id="paper-content">
+    {{ paper.html | safe }}
+  </div>
+</div>
+
+{# ───────── Tab 3: Activity ───────── #}
+<div id="tab-activity" class="tab-content">
+  <div id="activity-content" class="panel md-content">
+    {{ activity | safe }}
+  </div>
+</div>
+
+{# ───────── Tab 4: Backtest ───────── #}
+<div id="tab-backtest" class="tab-content">
+  <div class="btn-row">
+    <button id="btn-refresh-backtest" class="btn btn-secondary" onclick="handleRefreshBacktest()">Refresh backtest report</button>
+  </div>
+  <div id="backtest-content" class="panel md-content backtest-report">
+    {{ backtest | safe }}
+  </div>
+</div>
+
+{# ───────── Tab 5: Settings ───────── #}
+<div id="tab-settings" class="tab-content">
+  <div class="panel md-content">
+    {{ settings | safe }}
+  </div>
+</div>
+
+{% endblock %}

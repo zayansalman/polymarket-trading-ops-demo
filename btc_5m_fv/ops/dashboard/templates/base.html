@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BTC 5m Binary Fair Value{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="container">
+    {# Hero Header #}
+    <div class="hero">
+      <h1>BTC 5m Binary Fair Value</h1>
+      <p>Local paper-trading dashboard for Polymarket BTC Up/Down 5-minute markets.
+      Resolution-aware fair-value signal, bounded paper sizing, and operator controls.</p>
+    </div>
+
+    {# Tab Navigation #}
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="overview" onclick="showTab('overview')">Overview</button>
+      <button class="tab-btn" data-tab="btc5m" onclick="showTab('btc5m')">BTC 5m</button>
+      <button class="tab-btn" data-tab="activity" onclick="showTab('activity')">Activity</button>
+      <button class="tab-btn" data-tab="backtest" onclick="showTab('backtest')">Backtest</button>
+      <button class="tab-btn" data-tab="settings" onclick="showTab('settings')">Settings</button>
+      <div class="sse-indicator" title="Live connection status">
+        <span class="sse-dot connecting"></span>
+        <span class="sse-label">live</span>
+      </div>
+    </div>
+
+    {# Main Content #}
+    {% block content %}{% endblock %}
+  </div>
+
+  {# Toast container (dynamically populated) #}
+  <div class="toast-container"></div>
+
+  <script src="/static/dashboard.js"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
